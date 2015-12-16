@@ -1,0 +1,378 @@
+<html>
+<body >
+<p id="output">
+
+</p>		
+				<textarea id="addressesID" rows="10" cols=100>
+				
+				</textarea><br/>
+				<form id="form1" action="">
+				<input type="file" id="input" >
+				<input type="button" id="readFil" value="read" onclick="getFile()"> <br/>
+				<input type="button" id="remotefil" value="usinghttp" onclick="getremoteFile()"><br/>
+				<input type="button" id="orderBycity" value="orderBycity" onclick="sortByCity()">
+				<input type="button" id="orderByStreet" value="orderByStreet" onclick="sortByStreet()">
+				<input type="button" id="orderByPostCode" value="orderByPostCode" onclick="sortByPostCode()">
+				<input type="button" id="oderByHouseNum" value="oderByHouseNum" onclick="sortByHouseNum()">
+				<input type="button" id="oderByLat" value="orderByLatitude" onclick="sortByLat()">
+				<input type="button" id="orderByLon" value="orderByLongitude" onclick="sortByLon()">
+				<input type="button" id="groupByselect" value="add To selection" onclick="groupSelection()">
+				</form>
+				<textarea id="areaID" rows="10" cols=100>
+				
+				</textarea><br/>
+				<form id="form2">
+				<input type="button" id="clearID" value="Clear" onclick="clearTextArea()">
+				</form>
+<script type="text/javascript">
+var parm;
+var coordonates;
+var xmlhttp=[];
+var addressArray=[];
+
+var housenum=[];
+var street=[];
+var postcode=[];
+var city=[];
+var longitudeVal=[];
+var latitudeVal=[];
+var returnvalue;
+
+function sendGetReq(addressvalue,cnt){
+
+
+	xmlhttp.push(createString(cnt));
+	xmlhttp[cnt]= createhttRequest();
+			xmlhttp[cnt].onreadystatechange=function(){
+						//var xmlresponse=xmlhttp[cnt].responseXML;
+
+						var x;
+						var latitude;
+						var longitude;
+
+						try{
+
+								  if(xmlhttp[cnt].status==200){
+								  
+								
+										  latitude=xmlhttp[cnt].responseXML.getElementsByTagName("place")[0].getAttribute("lat");
+										  longitude=xmlhttp[cnt].responseXML.getElementsByTagName("place")[0].getAttribute("lon");
+										  returnvalue=", "+latitude+", "+longitude;
+									
+										
+										}
+
+						}
+						catch(err)
+						{
+						//document.getElementById("output").innerHTML=err.message;
+						}
+					}
+
+			xmlhttp[cnt].open('GET','http://nominatim.openstreetmap.org/search?q='+addressvalue[0].replace(/\s*,\s*/,'')+'&format=xml&polygon_geojson=1&addressdetails=1',false);
+			xmlhttp[cnt].send(null);
+			
+		if (returnvalue=="undefined"){
+			return "";
+		}
+		else{
+			return returnvalue;
+		}
+}
+function createString(count)
+{
+var str='xmlhttp'+count;
+return str;
+
+}
+function createhttRequest(){
+try {
+        return new XMLHttpRequest();
+    } catch (e) {
+        try {
+            return new ActiveXObject("Microsoft.XMLHTTP");
+        } catch (e) {
+            return new ActiveXObject("Msxml2.XMLHTTP");
+        }
+    }
+
+}
+
+function sortByPostCode(){
+	loadValues();
+	postcode.sort();
+	document.getElementById("areaID").value=" ";
+		for (var i=0;i<postcode.length;i++){
+				
+			
+				document.getElementById("areaID").value+="\n"+searchAddr(postcode[i]).replace(/^a-zA-Z0-9,/,'');
+				
+			}
+
+}
+
+
+function sortByLon(){
+	loadValues();
+	longitudeVal.sort();
+	document.getElementById("areaID").value=" ";
+		for (var i=0;i<longitudeVal.length;i++){
+				
+				document.getElementById("areaID").value+="\n"+searchAddr(longitudeVal[i]).replace(/^a-zA-Z0-9,/,'');
+				//alert("\n"+searchAddr(longitudeVal[i]));
+			}
+
+
+}
+
+function sortByStreet(){
+	loadValues();
+	street.sort();
+	document.getElementById("areaID").value=" ";
+		for (var i=0;i<street.length;i++){
+				
+				
+				document.getElementById("areaID").value+="\n"+searchAddr(street[i]).replace(/^a-zA-Z0-9,/,'');
+				
+			}
+
+
+}
+
+function sortByHouseNum(){
+	loadValues();
+	housenum.sort();
+	document.getElementById("areaID").value="";
+		for (var i=0;i<housenum.length;i++){
+			
+				document.getElementById("areaID").value+="\n"+searchAddr(housenum[i]).replace(/^a-zA-Z0-9,/,'');
+				
+			}
+
+}
+
+function sortByCity(){
+	loadValues();
+	city.sort();
+	document.getElementById("areaID").value=" ";
+		for (var i=0;i<city.length;i++){
+
+				document.getElementById("areaID").value+="\n"+searchAddr(city[i]).replace(/^a-zA-Z0-9,/,'');
+				
+			}
+}
+
+function sortByLat(){
+	loadValues();
+	latitudeVal.sort();
+	document.getElementById("areaID").value=" ";
+		for (var i=0;i<latitudeVal.length;i++){
+
+				document.getElementById("areaID").value+="\n"+searchAddr(latitudeVal[i]).replace(/^a-zA-Z0-9,/,'');
+				
+			}
+
+
+}
+function loadValues(){
+
+var textAValue=[];
+var clen=0;
+
+clearArray(addressArray);
+clearArray(housenum);
+clearArray(city);
+clearArray(street);
+clearArray(postcode);
+clearArray(latitudeVal);
+clearArray(longitudeVal);
+
+
+		for (var i=0;i<getTextAreaCont().length;i++){
+
+		textAValue.push(getTextAreaCont()[i]);
+		}
+
+			var len=textAValue.length;
+				for (var j=0;j<len;j++){
+
+
+					if( textAValue[j]!= null && textAValue[j] !== undefined )// need to rewrite this code
+					{
+					var str=textAValue[j];
+							if(str.search(" ")>(-1) && str.search("")>(-1) && str!==undefined){
+							 addressArray.push(str);
+							separateAddress(clen);
+							clen++;
+							}
+					}
+				}
+
+}
+
+function clearArray(myarray){
+while(myarray.length>0)
+myarray.pop();
+}
+
+
+function getTextAreaCont(){
+var textAreaCont=[];
+
+		var txtArea=document.getElementById("addressesID").value;
+
+		textAreaCont=txtArea.split(/\r\n|\n/);
+
+return textAreaCont;
+
+}
+function searchAddr(val){
+
+var addressline;
+	for (var i=0;i<addressArray.length;i++){
+			
+			if(addressArray[i]!==undefined){
+				var	searchStr=addressArray[i];
+				if(searchStr.search(val)>(-1)){
+					addressline=searchStr;
+				}
+			
+			}
+			
+	}
+return addressline;
+
+}
+
+function separateAddress(line){
+
+
+	for(var i=line;i<addressArray.length;i++)
+	{
+		if(addressArray[i]!==undefined)
+			{
+						var addressString=addressArray[i];
+						var values=addressString.split(',');
+						housenum.push(values[0]);
+						street.push(values[1]);
+						postcode.push(values[2]);
+						city.push(values[3]);
+						latitudeVal.push(values[4]);
+						longitudeVal.push(values[5]);
+			}
+
+
+	}
+
+
+}
+function groupSelection()
+{
+	 var selectedAdd = document.getElementById("addressesID");
+	 document.getElementById("areaID").value+="\n"+getSelectedText(selectedAdd);
+   
+
+}
+
+function getSelectedText(el) {
+    if (typeof el.selectionStart == "number") {
+        return el.value.slice(el.selectionStart, el.selectionEnd);
+    } else if (typeof document.selection != "undefined") {
+        var range = document.selection.createRange();
+        if (range.parentElement() == el) {
+            return range.text;
+        }
+    }
+    return "";
+}
+function clearTextArea(){
+
+document.getElementById("areaID").value=" ";
+}
+
+// read csv file
+function getFile(){
+
+
+					var textline;
+					var pattern='/,/g';
+					var replc='+';
+						
+						var selected_file = document.getElementById('input').files[0];
+						reader =new FileReader();
+						reader.readAsText(selected_file);
+						reader.onload=function(){
+						textline=reader.result;
+						var parmstr =textline.replace(/,/g,replc);
+						var alltextlines =parmstr.split(/\r\n|\n/);
+						document.getElementById("addressesID").readonly=false;
+						for (var i=0; i<alltextlines.length; i++) 
+						{
+						
+							var lineData = [];//need to limit the size 
+				
+							lineData.push(alltextlines[i].trim());
+					  
+							document.getElementById("addressesID").value+="\n"+lineData[0].replace(/\+/g,',').replace(/^a-zA-Z0-9,/,'')+sendGetReq(lineData,i);
+				 
+				       }
+					
+
+						};	
+						document.getElementById("addressesID").readonly=true;
+					}
+
+					
+//read csv file from remote server					
+function getremoteFile()
+{
+
+var pattern='/,/g';
+var replc='+';
+var txtFile = new XMLHttpRequest();
+
+txtFile.open("GET", "http://localhost/nominiHello/geo.csv", true);
+txtFile.onreadystatechange = function(){
+if(txtFile.readyState === 4)
+        {
+            if(txtFile.status === 200 || txtFile.status == 0)
+            {
+
+			 var allText = txtFile.responseText;
+				var parmstr =allText.replace(/,/g,replc);
+						var alltextlines =parmstr.split(/\r\n|\n/);
+						document.getElementById("addressesID").readonly=false;
+						for (var i=0; i<alltextlines.length; i++) 
+						{
+						
+							var lineData = [];//need to limit the size 
+				
+							lineData.push(alltextlines[i].trim());
+					  
+							document.getElementById("addressesID").value+="\n"+lineData[0].replace(/\+/g,',').replace(/^a-zA-Z0-9,/,'')+sendGetReq(lineData,i);
+				 
+				       }
+					
+
+						document.getElementById("addressesID").readonly=true;
+					
+				
+            }
+        }
+    }
+	txtFile.send();
+}
+
+
+
+    
+
+
+
+
+
+
+</script>
+
+</body>
+</html>
